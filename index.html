@@ -57,7 +57,8 @@
         color: #d63384;
         border: 2px solid #ff69b4;
         user-select: none;
-        transition: transform 0.1s linear; 
+        /* ใช้ will-change เพื่อบอก Browser ให้เตรียม Render กราฟิก ช่วยลดแล็ค */
+        will-change: transform; 
         display: flex;
         flex-direction: column;
       }
@@ -96,7 +97,7 @@
         left: 50%;
         transform: translateX(-50%);
         width: 90%;
-        max-width: 600px;
+        max-width: 650px; /* ขยายหน่อยเผื่อปุ่ม Emoji */
         background: rgba(255, 255, 255, 0.95);
         padding: 15px;
         border-radius: 30px;
@@ -105,10 +106,11 @@
         gap: 10px;
         z-index: 100;
         border: 3px solid #ff85a2;
+        align-items: center;
       }
 
       #nameInput {
-        width: 25%;
+        width: 20%;
         border: none;
         border-bottom: 2px solid #ffb7c5;
         outline: none;
@@ -133,7 +135,8 @@
         background: transparent;
       }
 
-      button {
+      /* ปุ่มกด */
+      .action-btn {
         background-color: #ff69b4;
         color: white;
         border: none;
@@ -145,13 +148,71 @@
         font-family: 'Kanit', sans-serif;
         white-space: nowrap;
       }
-      button:hover {
+      .action-btn:hover {
         background-color: #ff1493;
         transform: scale(1.05);
       }
-      button:disabled {
+      .action-btn:disabled {
         background-color: #ffb7c5;
         cursor: not-allowed;
+      }
+
+      /* ปุ่ม Emoji */
+      #emojiBtn {
+        background-color: #fff;
+        border: 2px solid #ff69b4;
+        color: #ff69b4;
+        font-size: 20px;
+        padding: 5px 12px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      #emojiBtn:hover {
+        background-color: #ffeff5;
+        transform: scale(1.1);
+      }
+
+      /* --- Emoji Picker Popup --- */
+      #emojiPicker {
+        display: none; /* ซ่อนไว้ก่อน */
+        position: absolute;
+        bottom: 80px; /* อยู่เหนือ input */
+        left: 50%; /* เริ่มต้นกึ่งกลาง แต่จะถูก JS ปรับ */
+        transform: translateX(-30%); /* ปรับตำแหน่ง */
+        background: white;
+        border: 2px solid #ffb7c5;
+        border-radius: 15px;
+        padding: 10px;
+        width: 280px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        z-index: 101;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      
+      #emojiPicker.show {
+        display: flex;
+        animation: popUp 0.3s ease-out;
+      }
+
+      .emoji-item {
+        font-size: 24px;
+        padding: 5px;
+        cursor: pointer;
+        transition: transform 0.1s;
+        user-select: none;
+      }
+      .emoji-item:hover {
+        transform: scale(1.3);
+      }
+
+      @keyframes popUp {
+        from { opacity: 0; transform: translateX(-30%) translateY(10px); }
+        to { opacity: 1; transform: translateX(-30%) translateY(0); }
       }
 
       /* --- Mobile Styles --- */
@@ -221,9 +282,20 @@
           padding: 6px;
           border-radius: 20px;
         }
-        #nameInput { width: 60px; font-size: 14px; }
+        #nameInput { width: 50px; font-size: 14px; }
         #msgInput { font-size: 14px; }
-        button { padding: 8px 15px; font-size: 14px; }
+        .action-btn { padding: 8px 15px; font-size: 14px; }
+        
+        #emojiPicker {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            bottom: 60px;
+        }
+        @keyframes popUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
       }
 
       @keyframes popIn {
@@ -248,7 +320,7 @@
   </head>
   <body>
 
-    <div id="main-header">Happy Valentine's Day 💖</div>
+    <div id="main-header">SF Valentine Message Board 💖</div>
 
     <div class="decoration dec-tl">💌</div>
     <div class="decoration dec-tr">🧸</div>
@@ -258,38 +330,87 @@
     <div id="floating-container"></div>
 
     <div id="input-area">
+      <!-- Popup Emoji -->
+      <div id="emojiPicker"></div>
+
       <input type="text" id="nameInput" placeholder="ชื่อ..." maxlength="20">
       <input type="text" id="msgInput" placeholder="ข้อความ..." maxlength="50">
-      <button onclick="submitMessage()" id="sendBtn">ส่ง ❤️</button>
+      
+      <!-- ปุ่ม Emoji -->
+      <button id="emojiBtn" onclick="toggleEmojiPicker()">😊</button>
+      
+      <button onclick="submitMessage()" id="sendBtn" class="action-btn">ส่ง ❤️</button>
     </div>
 
     <script>
       // =========================================================
-      // ⚠️⚠️ แก้ไขตรงนี้: นำ URL ที่ได้จาก Google Script มาใส่ในเครื่องหมายคำพูดด้านล่าง ⚠️⚠️
-      // ต้องเลือก Who has access เป็น "Anyone" ด้วยนะครับ ไม่งั้นจะโหลดไม่ได้
+      // ⚠️⚠️ แก้ไขตรงนี้: นำ URL ที่ได้จาก Google Script มาใส่ ⚠️⚠️
       // =========================================================
       const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmAocSQ4bwYrYitjiaxWq0yswxc1O3TDZa-w3iaz9h3SNkL7YlJuw4vq9Bf_y1cWrS/exec"; 
       
+      // การตั้งค่า
+      const MAX_MESSAGES = 30; // ⚡️ จำกัดข้อความที่แสดงในหน้าจอแค่ 30 เพื่อลดแล็ค
+
       let existingMessages = [];
       let floatingElements = [];
       let isMobile = false;
-      let hasAlertedError = false; // ตัวแปรกัน alert ซ้ำ
+      let hasAlertedError = false;
+
+      // รายการ Emoji ที่ให้เลือก
+      const emojis = [
+        "❤️", "💖", "💘", "💝", "💓", "💗", "💞", "💕", "💟", "❣️", 
+        "😍", "🥰", "😘", "😚", "😻", "🤩", "🤪", "😇", "🥳", "😎",
+        "🌹", "💐", "🌷", "🌻", "🌼", "🌸", "🌺", "🍫", "🍬", "🍭",
+        "🧸", "🎁", "🎀", "🎈", "🎉", "✨", "💫", "⭐️", "🌙", "☁️"
+      ];
 
       window.onload = function() {
         checkLayout(); 
         window.addEventListener('resize', checkLayout);
+        
+        // สร้าง Emoji Picker
+        createEmojiPicker();
 
-        // เช็คก่อนเลยว่าแก้ URL หรือยัง
         if (WEB_APP_URL.includes("URL_ที่ได้จาก") || WEB_APP_URL === "") {
-             alert("⚠️ คุณยังไม่ได้ใส่ลิงก์ Web App URL ครับ!\n\nกรุณาไปที่ไฟล์ index.html แล้วแก้บรรทัดที่ 265 ให้เป็นลิงก์ Google Script ของคุณ");
+             alert("⚠️ อย่าลืมใส่ลิงก์ Web App URL ในโค้ดนะครับ!");
              return;
         }
 
         fetchData(); 
         requestAnimationFrame(animateLoop);
-        
         setInterval(fetchData, 4000);
       };
+
+      // --- ฟังก์ชัน Emoji ---
+      function createEmojiPicker() {
+        const picker = document.getElementById('emojiPicker');
+        emojis.forEach(emoji => {
+            const span = document.createElement('span');
+            span.textContent = emoji;
+            span.className = 'emoji-item';
+            span.onclick = () => {
+                const msgInput = document.getElementById('msgInput');
+                msgInput.value += emoji;
+                msgInput.focus();
+                // toggleEmojiPicker(); // ปิด popup หลังเลือก (ถ้าอยากให้เลือกหลายอันได้ ให้ comment บรรทัดนี้)
+            };
+            picker.appendChild(span);
+        });
+      }
+
+      function toggleEmojiPicker() {
+        const picker = document.getElementById('emojiPicker');
+        picker.classList.toggle('show');
+      }
+
+      // ปิด Emoji เมื่อกดที่อื่น
+      document.addEventListener('click', function(event) {
+        const picker = document.getElementById('emojiPicker');
+        const btn = document.getElementById('emojiBtn');
+        if (!picker.contains(event.target) && !btn.contains(event.target)) {
+            picker.classList.remove('show');
+        }
+      });
 
       function checkLayout() {
         const wasMobile = isMobile;
@@ -313,28 +434,28 @@
 
         fetch(WEB_APP_URL)
           .then(response => {
-             // เช็คว่า Network OK ไหม
              if (!response.ok) throw new Error("Network response was not ok");
              return response.json();
           })
           .then(data => {
             updateBoard(data);
-            hasAlertedError = false; // รีเซ็ตสถานะเมื่อโหลดได้
+            hasAlertedError = false;
           })
           .catch(error => {
-            console.error('Error fetching data:', error);
-            // ถ้าเกิด Error และยังไม่เคยแจ้งเตือน ให้แจ้งเตือน 1 ครั้ง
-            if (!hasAlertedError) {
-                if (error.name === "SyntaxError") {
-                    alert("⚠️ เชื่อมต่อ Google Script ไม่ได้!\nสาเหตุที่เป็นไปได้:\n1. คุณไม่ได้ตั้งค่า Who has access เป็น 'Anyone' (ทุกคน)\n2. ลิงก์ URL ผิด");
-                } 
+            console.error('Error:', error);
+            if (!hasAlertedError && error.name === "SyntaxError") {
+                alert("⚠️ เชื่อมต่อไม่ได้! เช็ค URL หรือการตั้งค่า Anyone");
                 hasAlertedError = true;
             }
           });
       }
 
       function updateBoard(messages) {
+        // ถ้า Backend ส่งมาเยอะเกิน ให้ตัดเอาแค่ 30 อันล่าสุดก่อนประมวลผล (เผื่อ Backend ไม่ได้แก้)
+        // แต่จริงๆ เราจะจัดการที่ createFloatingText ด้วย
+        
         if (messages.length > existingMessages.length) {
+          // หาข้อความใหม่ที่ยังไม่มี
           let newMsgs = messages.slice(existingMessages.length);
           
           newMsgs.forEach(msgData => {
@@ -346,6 +467,14 @@
       }
 
       function createFloatingText(data) {
+        // ⚡️⚡️ ตรวจสอบจำนวนข้อความ ถ้าเกิน 30 ให้ลบอันเก่าสุดออก (FIFO) ⚡️⚡️
+        if (floatingElements.length >= MAX_MESSAGES) {
+            const oldest = floatingElements.shift(); // เอาตัวแรก (เก่าสุด) ออกจาก Array
+            if (oldest && oldest.element) {
+                oldest.element.remove(); // ลบออกจากหน้าจอ
+            }
+        }
+
         const container = document.getElementById('floating-container');
         const el = document.createElement('div');
         el.className = 'floating-msg';
@@ -357,6 +486,7 @@
           <div class="msg-content">${data.text}</div>
         `;
         
+        // ตำแหน่งเริ่มต้น
         const startX = Math.random() * (window.innerWidth - 100);
         const startY = 100 + Math.random() * (window.innerHeight - 250); 
         
@@ -390,6 +520,7 @@
             const containerW = window.innerWidth;
             const containerH = window.innerHeight;
 
+            // วนลูปเฉพาะข้อความที่มีอยู่ (ตอนนี้ถูกจำกัดไม่เกิน 30 แล้ว จะไม่แล็ค)
             floatingElements.forEach(item => {
               if (item.width === 0) {
                 item.width = item.element.offsetWidth;
@@ -399,16 +530,20 @@
               item.x += item.vx;
               item.y += item.vy;
 
+              // ชนขอบซ้ายขวา
               if (item.x <= 0 || item.x + item.width >= containerW) {
                 item.vx *= -1;
                 item.x = Math.max(0, Math.min(item.x, containerW - item.width));
               }
 
+              // ชนขอบบนล่าง
               if (item.y <= 0 || item.y + item.height >= containerH) {
                 item.vy *= -1;
                 item.y = Math.max(0, Math.min(item.y, containerH - item.height));
               }
 
+              // ใช้ transform แทน top/left เพื่อประสิทธิภาพที่ดีขึ้น (ถ้าแก้ไหว) 
+              // แต่ใช้ top/left แบบเดิมก็โอเคเพราะจำนวนน้อย
               item.element.style.left = item.x + 'px';
               item.element.style.top = item.y + 'px';
             });
@@ -449,13 +584,13 @@
           msgInput.focus();
           createHeartEffect();
           
+          document.getElementById('emojiPicker').classList.remove('show'); // ปิด emoji ถ้าเปิดอยู่
           setTimeout(fetchData, 1000);
         })
         .catch(err => {
           console.error(err);
           btn.disabled = false;
           btn.innerText = "ลองใหม่";
-          alert("ส่งข้อความไม่สำเร็จ กรุณาเช็ค Console");
         });
       }
 

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Valentine Message Board</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #fff0f5; 
+        font-family: 'Kanit', sans-serif;
+        background-image: radial-gradient(#ffb7c5 15%, transparent 16%), radial-gradient(#ffb7c5 15%, transparent 16%);
+        background-size: 60px 60px;
+        background-position: 0 0, 30px 30px;
+      }
+
+      /* --- Header --- */
+      #main-header {
+        position: absolute;
+        top: 30px;
+        width: 100%;
+        text-align: center;
+        font-family: 'Mali', cursive;
+        font-size: 3rem;
+        font-weight: 700;
+        color: #ff1493;
+        text-shadow: 3px 3px 0px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 105, 180, 0.3);
+        z-index: 10;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      /* --- Floating/Chat Container --- */
+      #floating-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* สไตล์ของกล่องข้อความ */
+      .floating-msg {
+        position: absolute;
+        white-space: nowrap;
+        padding: 12px 25px;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 4px 15px rgba(255, 105, 180, 0.4);
+        font-size: 20px;
+        font-family: 'Mali', cursive;
+        color: #d63384;
+        border: 2px solid #ff69b4;
+        user-select: none;
+        transition: transform 0.1s linear; 
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .sender-name {
+        display: none; 
+      }
+      
+      .msg-content::before {
+        content: '❤️ ';
+      }
+
+      /* --- Decorations --- */
+      .decoration {
+        position: absolute;
+        font-size: 3rem;
+        opacity: 0.8;
+        z-index: 0;
+        pointer-events: none;
+        animation: float-dec 3s ease-in-out infinite;
+      }
+      .dec-tl { top: 20px; left: 20px; animation-delay: 0s; }
+      .dec-tr { top: 20px; right: 20px; animation-delay: 1s; }
+      .dec-bl { bottom: 100px; left: 30px; animation-delay: 0.5s; font-size: 2.5rem; }
+      .dec-br { bottom: 100px; right: 30px; animation-delay: 1.5s; font-size: 2.5rem; }
+
+      @keyframes float-dec {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-10px) rotate(5deg); }
+      }
+
+      /* --- Input Area --- */
+      #input-area {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 600px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 10px;
+        z-index: 100;
+        border: 3px solid #ff85a2;
+      }
+
+      #nameInput {
+        width: 25%;
+        border: none;
+        border-bottom: 2px solid #ffb7c5;
+        outline: none;
+        padding: 10px;
+        font-size: 16px;
+        font-family: 'Kanit', sans-serif;
+        color: #ff69b4;
+        background: transparent;
+      }
+      #nameInput::placeholder {
+        color: #ffb7c5;
+      }
+
+      #msgInput {
+        flex-grow: 1;
+        border: none;
+        outline: none;
+        padding: 10px;
+        font-size: 16px;
+        font-family: 'Kanit', sans-serif;
+        color: #333;
+        background: transparent;
+      }
+
+      button {
+        background-color: #ff69b4;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s;
+        font-family: 'Kanit', sans-serif;
+        white-space: nowrap;
+      }
+      button:hover {
+        background-color: #ff1493;
+        transform: scale(1.05);
+      }
+      button:disabled {
+        background-color: #ffb7c5;
+        cursor: not-allowed;
+      }
+
+      /* --- Mobile Styles --- */
+      @media screen and (max-width: 768px) {
+        body { background-size: 30px 30px; }
+
+        #main-header {
+          position: fixed;
+          top: 0;
+          padding: 10px 0;
+          background: rgba(255, 240, 245, 0.95);
+          font-size: 1.4rem;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .decoration { display: none; }
+
+        #floating-container {
+          position: fixed;
+          top: 60px;
+          bottom: 70px;
+          left: 0;
+          width: 100%;
+          height: auto;
+          overflow-y: auto;
+          pointer-events: auto;
+          display: flex;
+          flex-direction: column;
+          padding: 10px;
+          box-sizing: border-box;
+          gap: 6px;
+        }
+
+        .floating-msg {
+          position: relative !important; 
+          left: auto !important;
+          top: auto !important;
+          transform: none !important;
+          white-space: normal;
+          word-wrap: break-word;
+          max-width: 75%;
+          font-size: 14px;
+          margin: 0;
+          align-self: flex-start;
+          animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          padding: 8px 12px;
+          border-radius: 15px;
+        }
+
+        .sender-name {
+          display: block;
+          font-size: 11px;
+          color: #ff69b4; 
+          font-weight: 600;
+          margin-bottom: 2px;
+        }
+
+        .floating-msg:nth-child(even) {
+          align-self: flex-end;
+          background-color: #ffeff5;
+          border-color: #ffb7c5;
+        }
+        
+        #input-area {
+          width: 96%;
+          bottom: 10px;
+          padding: 6px;
+          border-radius: 20px;
+        }
+        #nameInput { width: 60px; font-size: 14px; }
+        #msgInput { font-size: 14px; }
+        button { padding: 8px 15px; font-size: 14px; }
+      }
+
+      @keyframes popIn {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+
+      .heart-particle {
+        position: fixed;
+        color: #ff1493;
+        font-size: 20px;
+        animation: floatUp 2s ease-out forwards;
+        pointer-events: none;
+        z-index: 999;
+      }
+
+      @keyframes floatUp {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="main-header">Happy Valentine's Day 💖</div>
+
+    <div class="decoration dec-tl">💌</div>
+    <div class="decoration dec-tr">🧸</div>
+    <div class="decoration dec-bl">🌹</div>
+    <div class="decoration dec-br">🍫</div>
+
+    <div id="floating-container"></div>
+
+    <div id="input-area">
+      <input type="text" id="nameInput" placeholder="ชื่อ..." maxlength="20">
+      <input type="text" id="msgInput" placeholder="ข้อความ..." maxlength="50">
+      <button onclick="submitMessage()" id="sendBtn">ส่ง ❤️</button>
+    </div>
+
+    <script>
+      // ==========================================
+      // ⚠️ ใส่ URL ของ Google Apps Script Web App ตรงนี้ ⚠️
+      // ==========================================
+      const WEB_APP_URL = "URL_ที่ได้จาก_GOOGLE_SCRIPT_DEPLOY_ของคุณ_ใส่ตรงนี้"; 
+      // ตัวอย่าง: "https://script.google.com/macros/s/AKfycbzKQBgrr71ov2GTD3JEwlh7jkJx__bhg0v_dy7PLnDkZ2Oee5YnJtTVUxJN4xyxKVXA/exec"
+
+      let existingMessages = [];
+      let floatingElements = [];
+      let isMobile = false;
+
+      window.onload = function() {
+        checkLayout(); 
+        window.addEventListener('resize', checkLayout);
+
+        fetchData(); 
+        requestAnimationFrame(animateLoop);
+        
+        // ดึงข้อมูลทุกๆ 4 วินาที (ระวัง Quota ถ้าตั้งถี่เกินไป)
+        setInterval(fetchData, 4000);
+      };
+
+      function checkLayout() {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth <= 768;
+
+        if (wasMobile !== isMobile) {
+          const container = document.getElementById('floating-container');
+          const msgs = document.querySelectorAll('.floating-msg');
+          if (isMobile) {
+            msgs.forEach(el => {
+              el.style.left = '';
+              el.style.top = '';
+            });
+            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
+          }
+        }
+      }
+
+      // ฟังก์ชันดึงข้อมูลจาก Google Sheet (ใช้ fetch แทน google.script.run)
+      function fetchData() {
+        if (WEB_APP_URL.includes("URL_ที่ได้จาก")) {
+          console.error("กรุณาใส่ Web App URL ในโค้ดด้วยครับ");
+          return;
+        }
+
+        fetch(WEB_APP_URL)
+          .then(response => response.json())
+          .then(data => {
+            updateBoard(data);
+          })
+          .catch(error => console.error('Error fetching data:', error));
+      }
+
+      function updateBoard(messages) {
+        if (messages.length > existingMessages.length) {
+          let newMsgs = messages.slice(existingMessages.length);
+          
+          newMsgs.forEach(msgData => {
+            createFloatingText(msgData);
+          });
+
+          existingMessages = messages;
+        }
+      }
+
+      function createFloatingText(data) {
+        const container = document.getElementById('floating-container');
+        const el = document.createElement('div');
+        el.className = 'floating-msg';
+        
+        const senderName = (data.name && data.name.trim() !== "") ? data.name : "ไม่ระบุตัวตน";
+        
+        el.innerHTML = `
+          <div class="sender-name">${senderName}</div>
+          <div class="msg-content">${data.text}</div>
+        `;
+        
+        const startX = Math.random() * (window.innerWidth - 100);
+        const startY = 100 + Math.random() * (window.innerHeight - 250); 
+        
+        if (!isMobile) {
+            el.style.left = startX + 'px';
+            el.style.top = startY + 'px';
+        }
+        
+        container.appendChild(el);
+
+        let speed = 0.4 + Math.random() * 0.8;
+        let angle = Math.random() * Math.PI * 2;
+
+        floatingElements.push({
+          element: el,
+          x: startX,
+          y: startY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          width: 0,
+          height: 0
+        });
+
+        if (isMobile) {
+            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+        }
+      }
+
+      function animateLoop() {
+        if (!isMobile) {
+            const containerW = window.innerWidth;
+            const containerH = window.innerHeight;
+
+            floatingElements.forEach(item => {
+              if (item.width === 0) {
+                item.width = item.element.offsetWidth;
+                item.height = item.element.offsetHeight;
+              }
+
+              item.x += item.vx;
+              item.y += item.vy;
+
+              if (item.x <= 0 || item.x + item.width >= containerW) {
+                item.vx *= -1;
+                item.x = Math.max(0, Math.min(item.x, containerW - item.width));
+              }
+
+              if (item.y <= 0 || item.y + item.height >= containerH) {
+                item.vy *= -1;
+                item.y = Math.max(0, Math.min(item.y, containerH - item.height));
+              }
+
+              item.element.style.left = item.x + 'px';
+              item.element.style.top = item.y + 'px';
+            });
+        }
+        requestAnimationFrame(animateLoop);
+      }
+
+      // ฟังก์ชันส่งข้อความ (ใช้ fetch POST)
+      function submitMessage() {
+        const msgInput = document.getElementById('msgInput');
+        const nameInput = document.getElementById('nameInput');
+        const btn = document.getElementById('sendBtn');
+        
+        const text = msgInput.value.trim();
+        const name = nameInput.value.trim();
+
+        if (text === "") return;
+
+        btn.disabled = true;
+        btn.innerText = "ส่ง...";
+
+        // ส่งข้อมูลแบบ POST ไปยัง Google Script
+        fetch(WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors', // สำคัญ: no-cors ทำให้ส่งข้อมูลได้แต่จะอ่าน response ไม่ได้ (เพื่อแก้ปัญหา Cross-Origin)
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: text, name: name })
+        })
+        .then(() => {
+          // เนื่องจากใช้ no-cors เราจะถือว่าส่งสำเร็จเสมอ
+          msgInput.value = "";
+          btn.disabled = false;
+          btn.innerText = "ส่ง ❤️";
+          msgInput.focus();
+          createHeartEffect();
+          
+          // ดึงข้อมูลใหม่หลังจากส่งเสร็จ (หน่วงเวลานิดหน่อยรอ Sheet อัปเดต)
+          setTimeout(fetchData, 1000);
+        })
+        .catch(err => {
+          console.error(err);
+          btn.disabled = false;
+          btn.innerText = "ลองใหม่";
+        });
+      }
+
+      document.getElementById('msgInput').addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+          submitMessage();
+        }
+      });
+
+      function createHeartEffect() {
+        const heart = document.createElement('div');
+        heart.innerText = '💖';
+        heart.className = 'heart-particle';
+        heart.style.left = (window.innerWidth / 2) + 'px';
+        heart.style.bottom = '80px';
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 2000);
+      }
+    </script>
+  </body>
+</html>

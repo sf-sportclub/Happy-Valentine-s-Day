@@ -264,24 +264,30 @@
     </div>
 
     <script>
-      // ==========================================
-      // ⚠️ ใส่ URL ของ Google Apps Script Web App ตรงนี้ ⚠️
-      // ==========================================
-      const WEB_APP_URL = "URL_ที่ได้จาก_GOOGLE_SCRIPT_DEPLOY_ของคุณ_ใส่ตรงนี้"; 
-      // ตัวอย่าง: "https://script.google.com/macros/s/AKfycbzKQBgrr71ov2GTD3JEwlh7jkJx__bhg0v_dy7PLnDkZ2Oee5YnJtTVUxJN4xyxKVXA/exec"
-
+      // =========================================================
+      // ⚠️⚠️ แก้ไขตรงนี้: นำ URL ที่ได้จาก Google Script มาใส่ในเครื่องหมายคำพูดด้านล่าง ⚠️⚠️
+      // ต้องเลือก Who has access เป็น "Anyone" ด้วยนะครับ ไม่งั้นจะโหลดไม่ได้
+      // =========================================================
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmAocSQ4bwYrYitjiaxWq0yswxc1O3TDZa-w3iaz9h3SNkL7YlJuw4vq9Bf_y1cWrS/exec"; 
+      
       let existingMessages = [];
       let floatingElements = [];
       let isMobile = false;
+      let hasAlertedError = false; // ตัวแปรกัน alert ซ้ำ
 
       window.onload = function() {
         checkLayout(); 
         window.addEventListener('resize', checkLayout);
 
+        // เช็คก่อนเลยว่าแก้ URL หรือยัง
+        if (WEB_APP_URL.includes("URL_ที่ได้จาก") || WEB_APP_URL === "") {
+             alert("⚠️ คุณยังไม่ได้ใส่ลิงก์ Web App URL ครับ!\n\nกรุณาไปที่ไฟล์ index.html แล้วแก้บรรทัดที่ 265 ให้เป็นลิงก์ Google Script ของคุณ");
+             return;
+        }
+
         fetchData(); 
         requestAnimationFrame(animateLoop);
         
-        // ดึงข้อมูลทุกๆ 4 วินาที (ระวัง Quota ถ้าตั้งถี่เกินไป)
         setInterval(fetchData, 4000);
       };
 
@@ -302,19 +308,29 @@
         }
       }
 
-      // ฟังก์ชันดึงข้อมูลจาก Google Sheet (ใช้ fetch แทน google.script.run)
       function fetchData() {
-        if (WEB_APP_URL.includes("URL_ที่ได้จาก")) {
-          console.error("กรุณาใส่ Web App URL ในโค้ดด้วยครับ");
-          return;
-        }
+        if (WEB_APP_URL.includes("URL_ที่ได้จาก")) return;
 
         fetch(WEB_APP_URL)
-          .then(response => response.json())
+          .then(response => {
+             // เช็คว่า Network OK ไหม
+             if (!response.ok) throw new Error("Network response was not ok");
+             return response.json();
+          })
           .then(data => {
             updateBoard(data);
+            hasAlertedError = false; // รีเซ็ตสถานะเมื่อโหลดได้
           })
-          .catch(error => console.error('Error fetching data:', error));
+          .catch(error => {
+            console.error('Error fetching data:', error);
+            // ถ้าเกิด Error และยังไม่เคยแจ้งเตือน ให้แจ้งเตือน 1 ครั้ง
+            if (!hasAlertedError) {
+                if (error.name === "SyntaxError") {
+                    alert("⚠️ เชื่อมต่อ Google Script ไม่ได้!\nสาเหตุที่เป็นไปได้:\n1. คุณไม่ได้ตั้งค่า Who has access เป็น 'Anyone' (ทุกคน)\n2. ลิงก์ URL ผิด");
+                } 
+                hasAlertedError = true;
+            }
+          });
       }
 
       function updateBoard(messages) {
@@ -400,8 +416,12 @@
         requestAnimationFrame(animateLoop);
       }
 
-      // ฟังก์ชันส่งข้อความ (ใช้ fetch POST)
       function submitMessage() {
+        if (WEB_APP_URL.includes("URL_ที่ได้จาก")) {
+             alert("กรุณาใส่ URL ของ Web App ก่อนส่งข้อความ");
+             return;
+        }
+
         const msgInput = document.getElementById('msgInput');
         const nameInput = document.getElementById('nameInput');
         const btn = document.getElementById('sendBtn');
@@ -414,30 +434,28 @@
         btn.disabled = true;
         btn.innerText = "ส่ง...";
 
-        // ส่งข้อมูลแบบ POST ไปยัง Google Script
         fetch(WEB_APP_URL, {
           method: 'POST',
-          mode: 'no-cors', // สำคัญ: no-cors ทำให้ส่งข้อมูลได้แต่จะอ่าน response ไม่ได้ (เพื่อแก้ปัญหา Cross-Origin)
+          mode: 'no-cors',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ text: text, name: name })
         })
         .then(() => {
-          // เนื่องจากใช้ no-cors เราจะถือว่าส่งสำเร็จเสมอ
           msgInput.value = "";
           btn.disabled = false;
           btn.innerText = "ส่ง ❤️";
           msgInput.focus();
           createHeartEffect();
           
-          // ดึงข้อมูลใหม่หลังจากส่งเสร็จ (หน่วงเวลานิดหน่อยรอ Sheet อัปเดต)
           setTimeout(fetchData, 1000);
         })
         .catch(err => {
           console.error(err);
           btn.disabled = false;
           btn.innerText = "ลองใหม่";
+          alert("ส่งข้อความไม่สำเร็จ กรุณาเช็ค Console");
         });
       }
 

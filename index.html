@@ -44,7 +44,6 @@
         z-index: 1;
       }
 
-      /* สไตล์ของกล่องข้อความ */
       .floating-msg {
         position: absolute;
         white-space: nowrap;
@@ -57,18 +56,133 @@
         color: #d63384;
         border: 2px solid #ff69b4;
         user-select: none;
-        /* ใช้ will-change เพื่อบอก Browser ให้เตรียม Render กราฟิก ช่วยลดแล็ค */
         will-change: transform; 
         display: flex;
         flex-direction: column;
       }
       
-      .sender-name {
-        display: none; 
+      .sender-name { display: none; }
+      .msg-content::before { content: '❤️ '; }
+
+      /* --- Input Area --- */
+      #input-area {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 650px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 10px;
+        z-index: 100;
+        border: 3px solid #ff85a2;
+        align-items: center;
+        flex-wrap: wrap; /* ให้ counter ลงมาบรรทัดใหม่ในมือถือถ้าจำเป็น */
       }
-      
-      .msg-content::before {
-        content: '❤️ ';
+
+      #nameInput {
+        width: 20%;
+        border: none;
+        border-bottom: 2px solid #ffb7c5;
+        outline: none;
+        padding: 10px;
+        font-size: 16px;
+        font-family: 'Kanit', sans-serif;
+        color: #ff69b4;
+        background: transparent;
+      }
+      #nameInput::placeholder { color: #ffb7c5; }
+
+      /* Container สำหรับ Input + Counter */
+      .msg-input-wrapper {
+        flex-grow: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      #msgInput {
+        width: 100%;
+        border: none;
+        outline: none;
+        padding: 10px;
+        padding-right: 40px; /* เว้นที่ให้ตัวนับ */
+        font-size: 16px;
+        font-family: 'Kanit', sans-serif;
+        color: #333;
+        background: transparent;
+      }
+
+      /* ตัวนับตัวอักษร */
+      #charCounter {
+        position: absolute;
+        right: 5px;
+        bottom: 5px;
+        font-size: 10px;
+        color: #ffb7c5;
+        font-weight: bold;
+        pointer-events: none;
+      }
+      #charCounter.warning { color: #ff0000; }
+
+      .action-btn {
+        background-color: #ff69b4;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s;
+        font-family: 'Kanit', sans-serif;
+        white-space: nowrap;
+      }
+      .action-btn:hover { background-color: #ff1493; transform: scale(1.05); }
+      .action-btn:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
+
+      #emojiBtn {
+        background-color: #fff;
+        border: 2px solid #ff69b4;
+        color: #ff69b4;
+        font-size: 20px;
+        padding: 5px 12px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      #emojiBtn:hover { background-color: #ffeff5; transform: scale(1.1); }
+
+      /* --- Emoji Picker --- */
+      #emojiPicker {
+        display: none;
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-30%);
+        background: white;
+        border: 2px solid #ffb7c5;
+        border-radius: 15px;
+        padding: 10px;
+        width: 280px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        z-index: 101;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      #emojiPicker.show { display: flex; animation: popUp 0.3s ease-out; }
+      .emoji-item { font-size: 24px; padding: 5px; cursor: pointer; transition: transform 0.1s; user-select: none; }
+      .emoji-item:hover { transform: scale(1.3); }
+
+      @keyframes popUp {
+        from { opacity: 0; transform: translateX(-30%) translateY(10px); }
+        to { opacity: 1; transform: translateX(-30%) translateY(0); }
       }
 
       /* --- Decorations --- */
@@ -90,237 +204,48 @@
         50% { transform: translateY(-10px) rotate(5deg); }
       }
 
-      /* --- Input Area --- */
-      #input-area {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 650px; /* ขยายหน่อยเผื่อปุ่ม Emoji */
-        background: rgba(255, 255, 255, 0.95);
-        padding: 15px;
-        border-radius: 30px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        display: flex;
-        gap: 10px;
-        z-index: 100;
-        border: 3px solid #ff85a2;
-        align-items: center;
-      }
-
-      #nameInput {
-        width: 20%;
-        border: none;
-        border-bottom: 2px solid #ffb7c5;
-        outline: none;
-        padding: 10px;
-        font-size: 16px;
-        font-family: 'Kanit', sans-serif;
-        color: #ff69b4;
-        background: transparent;
-      }
-      #nameInput::placeholder {
-        color: #ffb7c5;
-      }
-
-      #msgInput {
-        flex-grow: 1;
-        border: none;
-        outline: none;
-        padding: 10px;
-        font-size: 16px;
-        font-family: 'Kanit', sans-serif;
-        color: #333;
-        background: transparent;
-      }
-
-      /* ปุ่มกด */
-      .action-btn {
-        background-color: #ff69b4;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: transform 0.2s;
-        font-family: 'Kanit', sans-serif;
-        white-space: nowrap;
-      }
-      .action-btn:hover {
-        background-color: #ff1493;
-        transform: scale(1.05);
-      }
-      .action-btn:disabled {
-        background-color: #ffb7c5;
-        cursor: not-allowed;
-      }
-
-      /* ปุ่ม Emoji */
-      #emojiBtn {
-        background-color: #fff;
-        border: 2px solid #ff69b4;
-        color: #ff69b4;
-        font-size: 20px;
-        padding: 5px 12px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      #emojiBtn:hover {
-        background-color: #ffeff5;
-        transform: scale(1.1);
-      }
-
-      /* --- Emoji Picker Popup --- */
-      #emojiPicker {
-        display: none; /* ซ่อนไว้ก่อน */
-        position: absolute;
-        bottom: 80px; /* อยู่เหนือ input */
-        left: 50%; /* เริ่มต้นกึ่งกลาง แต่จะถูก JS ปรับ */
-        transform: translateX(-30%); /* ปรับตำแหน่ง */
-        background: white;
-        border: 2px solid #ffb7c5;
-        border-radius: 15px;
-        padding: 10px;
-        width: 280px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        z-index: 101;
-        flex-wrap: wrap;
-        gap: 5px;
-        justify-content: center;
-        max-height: 200px;
-        overflow-y: auto;
-      }
-      
-      #emojiPicker.show {
-        display: flex;
-        animation: popUp 0.3s ease-out;
-      }
-
-      .emoji-item {
-        font-size: 24px;
-        padding: 5px;
-        cursor: pointer;
-        transition: transform 0.1s;
-        user-select: none;
-      }
-      .emoji-item:hover {
-        transform: scale(1.3);
-      }
-
-      @keyframes popUp {
-        from { opacity: 0; transform: translateX(-30%) translateY(10px); }
-        to { opacity: 1; transform: translateX(-30%) translateY(0); }
-      }
-
       /* --- Mobile Styles --- */
       @media screen and (max-width: 768px) {
         body { background-size: 30px 30px; }
-
-        #main-header {
-          position: fixed;
-          top: 0;
-          padding: 10px 0;
-          background: rgba(255, 240, 245, 0.95);
-          font-size: 1.4rem;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
+        #main-header { position: fixed; top: 0; padding: 10px 0; background: rgba(255, 240, 245, 0.95); font-size: 1.4rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .decoration { display: none; }
 
         #floating-container {
-          position: fixed;
-          top: 60px;
-          bottom: 70px;
-          left: 0;
-          width: 100%;
-          height: auto;
-          overflow-y: auto;
-          pointer-events: auto;
-          display: flex;
-          flex-direction: column;
-          padding: 10px;
-          box-sizing: border-box;
-          gap: 6px;
+          position: fixed; top: 60px; bottom: 70px; left: 0; width: 100%; height: auto;
+          overflow-y: auto; pointer-events: auto; display: flex; flex-direction: column;
+          padding: 10px; box-sizing: border-box; gap: 6px;
         }
 
         .floating-msg {
-          position: relative !important; 
-          left: auto !important;
-          top: auto !important;
-          transform: none !important;
-          white-space: normal;
-          word-wrap: break-word;
-          max-width: 75%;
-          font-size: 14px;
-          margin: 0;
-          align-self: flex-start;
-          animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          padding: 8px 12px;
-          border-radius: 15px;
+          position: relative !important; left: auto !important; top: auto !important; transform: none !important;
+          white-space: normal; word-wrap: break-word; max-width: 75%; font-size: 14px; margin: 0;
+          align-self: flex-start; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          padding: 8px 12px; border-radius: 15px;
         }
 
-        .sender-name {
-          display: block;
-          font-size: 11px;
-          color: #ff69b4; 
-          font-weight: 600;
-          margin-bottom: 2px;
-        }
-
-        .floating-msg:nth-child(even) {
-          align-self: flex-end;
-          background-color: #ffeff5;
-          border-color: #ffb7c5;
-        }
+        .sender-name { display: block; font-size: 11px; color: #ff69b4; font-weight: 600; margin-bottom: 2px; }
+        .floating-msg:nth-child(even) { align-self: flex-end; background-color: #ffeff5; border-color: #ffb7c5; }
         
-        #input-area {
-          width: 96%;
-          bottom: 10px;
-          padding: 6px;
-          border-radius: 20px;
-        }
+        #input-area { width: 96%; bottom: 10px; padding: 6px; border-radius: 20px; }
         #nameInput { width: 50px; font-size: 14px; }
         #msgInput { font-size: 14px; }
         .action-btn { padding: 8px 15px; font-size: 14px; }
         
-        #emojiPicker {
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            bottom: 60px;
-        }
+        #emojiPicker { left: 50%; transform: translateX(-50%); width: 90%; bottom: 60px; }
         @keyframes popUp {
             from { opacity: 0; transform: translateX(-50%) translateY(10px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
       }
 
-      @keyframes popIn {
-        from { transform: scale(0.5); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-      }
-
-      .heart-particle {
-        position: fixed;
-        color: #ff1493;
-        font-size: 20px;
-        animation: floatUp 2s ease-out forwards;
-        pointer-events: none;
-        z-index: 999;
-      }
-
-      @keyframes floatUp {
-        0% { transform: translateY(0) scale(1); opacity: 1; }
-        100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
-      }
+      @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      .heart-particle { position: fixed; color: #ff1493; font-size: 20px; animation: floatUp 2s ease-out forwards; pointer-events: none; z-index: 999; }
+      @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-100px) scale(1.5); opacity: 0; } }
     </style>
   </head>
   <body>
 
-    <div id="main-header">SF Valentine Message Board 💖</div>
+    <div id="main-header">Happy Valentine's Day 💖</div>
 
     <div class="decoration dec-tl">💌</div>
     <div class="decoration dec-tr">🧸</div>
@@ -330,33 +255,35 @@
     <div id="floating-container"></div>
 
     <div id="input-area">
-      <!-- Popup Emoji -->
       <div id="emojiPicker"></div>
 
       <input type="text" id="nameInput" placeholder="ชื่อ..." maxlength="20">
-      <input type="text" id="msgInput" placeholder="ข้อความ..." maxlength="50">
       
-      <!-- ปุ่ม Emoji -->
+      <div class="msg-input-wrapper">
+        <!-- Maxlength 120 ตาม Requirement -->
+        <input type="text" id="msgInput" placeholder="ข้อความ..." maxlength="120">
+        <div id="charCounter">0/120</div>
+      </div>
+      
       <button id="emojiBtn" onclick="toggleEmojiPicker()">😊</button>
-      
       <button onclick="submitMessage()" id="sendBtn" class="action-btn">ส่ง ❤️</button>
     </div>
 
     <script>
       // =========================================================
-      // ⚠️⚠️ แก้ไขตรงนี้: นำ URL ที่ได้จาก Google Script มาใส่ ⚠️⚠️
+      // ⚠️⚠️ ตั้งค่า Web App URL และ Token ให้ตรงกับ Google Apps Script ⚠️⚠️
       // =========================================================
-      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmAocSQ4bwYrYitjiaxWq0yswxc1O3TDZa-w3iaz9h3SNkL7YlJuw4vq9Bf_y1cWrS/exec"; 
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8MuI4cpeOFEnf7Mv5iYCTDpmq_E1jKa4yd4ftcryrXxs9BDV3Mn0_AoUkq28dC6sY/exec"; 
+      const API_TOKEN = 'MY_LOVE_TOKEN_2025'; // ต้องตรงกับ .gs
       
-      // การตั้งค่า
-      const MAX_MESSAGES = 30; // ⚡️ จำกัดข้อความที่แสดงในหน้าจอแค่ 30 เพื่อลดแล็ค
+      const MAX_MESSAGES = 30; 
+      const MAX_CHARS = 120; // ตรงกับ HTML maxlength
 
       let existingMessages = [];
       let floatingElements = [];
       let isMobile = false;
       let hasAlertedError = false;
 
-      // รายการ Emoji ที่ให้เลือก
       const emojis = [
         "❤️", "💖", "💘", "💝", "💓", "💗", "💞", "💕", "💟", "❣️", 
         "😍", "🥰", "😘", "😚", "😻", "🤩", "🤪", "😇", "🥳", "😎",
@@ -368,8 +295,8 @@
         checkLayout(); 
         window.addEventListener('resize', checkLayout);
         
-        // สร้าง Emoji Picker
         createEmojiPicker();
+        setupInputValidation(); // เริ่มระบบตรวจสอบ Input
 
         if (WEB_APP_URL.includes("URL_ที่ได้จาก") || WEB_APP_URL === "") {
              alert("⚠️ อย่าลืมใส่ลิงก์ Web App URL ในโค้ดนะครับ!");
@@ -381,7 +308,34 @@
         setInterval(fetchData, 4000);
       };
 
-      // --- ฟังก์ชัน Emoji ---
+      // --- Input Validation & Counter ---
+      function setupInputValidation() {
+        const msgInput = document.getElementById('msgInput');
+        const counter = document.getElementById('charCounter');
+
+        msgInput.addEventListener('input', function() {
+            const len = this.value.length;
+            counter.innerText = `${len}/${MAX_CHARS}`;
+            
+            if (len >= MAX_CHARS) {
+                counter.classList.add('warning');
+            } else {
+                counter.classList.remove('warning');
+            }
+        });
+      }
+
+      // --- XSS Protection (Sanitize Function) ---
+      function escapeHtml(text) {
+        if (!text) return "";
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+      }
+
       function createEmojiPicker() {
         const picker = document.getElementById('emojiPicker');
         emojis.forEach(emoji => {
@@ -390,9 +344,12 @@
             span.className = 'emoji-item';
             span.onclick = () => {
                 const msgInput = document.getElementById('msgInput');
-                msgInput.value += emoji;
-                msgInput.focus();
-                // toggleEmojiPicker(); // ปิด popup หลังเลือก (ถ้าอยากให้เลือกหลายอันได้ ให้ comment บรรทัดนี้)
+                if (msgInput.value.length < MAX_CHARS) {
+                    msgInput.value += emoji;
+                    // Trigger input event เพื่อ update counter
+                    msgInput.dispatchEvent(new Event('input')); 
+                    msgInput.focus();
+                }
             };
             picker.appendChild(span);
         });
@@ -403,7 +360,6 @@
         picker.classList.toggle('show');
       }
 
-      // ปิด Emoji เมื่อกดที่อื่น
       document.addEventListener('click', function(event) {
         const picker = document.getElementById('emojiPicker');
         const btn = document.getElementById('emojiBtn');
@@ -415,15 +371,11 @@
       function checkLayout() {
         const wasMobile = isMobile;
         isMobile = window.innerWidth <= 768;
-
         if (wasMobile !== isMobile) {
           const container = document.getElementById('floating-container');
           const msgs = document.querySelectorAll('.floating-msg');
           if (isMobile) {
-            msgs.forEach(el => {
-              el.style.left = '';
-              el.style.top = '';
-            });
+            msgs.forEach(el => { el.style.left = ''; el.style.top = ''; });
             setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
           }
         }
@@ -451,42 +403,73 @@
       }
 
       function updateBoard(messages) {
-        // ถ้า Backend ส่งมาเยอะเกิน ให้ตัดเอาแค่ 30 อันล่าสุดก่อนประมวลผล (เผื่อ Backend ไม่ได้แก้)
-        // แต่จริงๆ เราจะจัดการที่ createFloatingText ด้วย
+        // Backend ส่งมาแบบ Sorted แล้ว แต่เราเช็คความซ้ำซ้อน
+        // เนื่องจาก Backend ส่งมาเป็น [Newest, ..., Oldest]
+        // เราควรกลับด้านเพื่อแสดงผลถ้าเราต้องการดู Timeline หรือไม่?
+        // Logic เดิมคือโชว์ลอยๆ สุ่มๆ ดังนั้นลำดับไม่ซีเรียสมาก แต่ถ้า Mobile Mode จะเรียง
         
-        if (messages.length > existingMessages.length) {
-          // หาข้อความใหม่ที่ยังไม่มี
-          let newMsgs = messages.slice(existingMessages.length);
-          
-          newMsgs.forEach(msgData => {
-            createFloatingText(msgData);
-          });
-
-          existingMessages = messages;
+        // ถ้า messages มาใหม่มากกว่าที่มีอยู่
+        if (messages.length > 0) {
+           // เช็คว่ามีข้อความไหนใหม่บ้าง โดยดูจาก Timestamp หรือเนื้อหา (ในที่นี้เช็ค length ก่อนง่ายๆ)
+           // แต่เพื่อความชัวร์ เราจะ Clear แล้ว Render ใหม่ หรือ Append เฉพาะอันใหม่
+           // วิธีง่ายสุดสำหรับ Floating Board คือเช็คจำนวน
+           
+           // เพื่อความง่ายและรองรับการ Sort DESC จาก Backend
+           // เราจะ Filter เอาเฉพาะอันที่ "Timestamp" ใหม่กว่าอันล่าสุดที่เรามี
+           // แต่เนื่องจาก Timestamp เป็น String อาจจะเทียบยาก
+           // ใช้ Logic เดิม: ถ้าจำนวนเปลี่ยน หรือมีอะไรเปลี่ยนค่อยอัปเดต
+           
+           // Hack: เนื่องจาก Floating ลอยไปมา การ Re-render ทั้งหมดจะทำให้กระตุก
+           // เราจะเช็คแค่ถ้ามีข้อความใหม่จริงๆ
+           
+           const latestMsg = messages[0]; // อันใหม่สุดจาก Server
+           const currentLatest = existingMessages[0]; // อันใหม่สุด Local
+           
+           // ถ้าข้อมูลไม่เหมือนกันแสดงว่ามีของใหม่ (เทียบ Timestamp หรือ Text)
+           if (!currentLatest || (latestMsg.timestamp !== currentLatest.timestamp)) {
+                
+                // หาความต่าง (Diff) - แต่เพื่อความง่าย เราจะ Add อันที่ใหม่สุดเข้าไป
+                // สมมติ Server ส่งมา 50 อัน เราเอามาแสดงเฉพาะที่ยังไม่มีในจอ
+                
+                // Reverse กลับเพื่อให้เก่าสุดมาก่อน จะได้ loop สร้างตามลำดับ
+                let incoming = [...messages].reverse(); 
+                
+                incoming.forEach(msgData => {
+                    // เช็คว่ามีข้อความนี้ใน existingMessages หรือยัง (โดยใช้ timestamp เป็น key ถ้ามี)
+                    // ถ้าไม่มี timestamp ใช้ text+name แทน
+                    const isExist = existingMessages.some(em => 
+                        em.timestamp === msgData.timestamp && em.text === msgData.text
+                    );
+                    
+                    if (!isExist) {
+                        createFloatingText(msgData);
+                    }
+                });
+                
+                existingMessages = messages;
+           }
         }
       }
 
       function createFloatingText(data) {
-        // ⚡️⚡️ ตรวจสอบจำนวนข้อความ ถ้าเกิน 30 ให้ลบอันเก่าสุดออก (FIFO) ⚡️⚡️
         if (floatingElements.length >= MAX_MESSAGES) {
-            const oldest = floatingElements.shift(); // เอาตัวแรก (เก่าสุด) ออกจาก Array
-            if (oldest && oldest.element) {
-                oldest.element.remove(); // ลบออกจากหน้าจอ
-            }
+            const oldest = floatingElements.shift(); 
+            if (oldest && oldest.element) oldest.element.remove();
         }
 
         const container = document.getElementById('floating-container');
         const el = document.createElement('div');
         el.className = 'floating-msg';
         
-        const senderName = (data.name && data.name.trim() !== "") ? data.name : "ไม่ระบุตัวตน";
+        // XSS Protection ตรงนี้
+        const safeText = escapeHtml(data.text);
+        const safeName = (data.name && data.name.trim() !== "") ? escapeHtml(data.name) : "ไม่ระบุตัวตน";
         
         el.innerHTML = `
-          <div class="sender-name">${senderName}</div>
-          <div class="msg-content">${data.text}</div>
+          <div class="sender-name">${safeName}</div>
+          <div class="msg-content">${safeText}</div>
         `;
         
-        // ตำแหน่งเริ่มต้น
         const startX = Math.random() * (window.innerWidth - 100);
         const startY = 100 + Math.random() * (window.innerHeight - 250); 
         
@@ -520,30 +503,22 @@
             const containerW = window.innerWidth;
             const containerH = window.innerHeight;
 
-            // วนลูปเฉพาะข้อความที่มีอยู่ (ตอนนี้ถูกจำกัดไม่เกิน 30 แล้ว จะไม่แล็ค)
             floatingElements.forEach(item => {
               if (item.width === 0) {
                 item.width = item.element.offsetWidth;
                 item.height = item.element.offsetHeight;
               }
-
               item.x += item.vx;
               item.y += item.vy;
 
-              // ชนขอบซ้ายขวา
               if (item.x <= 0 || item.x + item.width >= containerW) {
                 item.vx *= -1;
                 item.x = Math.max(0, Math.min(item.x, containerW - item.width));
               }
-
-              // ชนขอบบนล่าง
               if (item.y <= 0 || item.y + item.height >= containerH) {
                 item.vy *= -1;
                 item.y = Math.max(0, Math.min(item.y, containerH - item.height));
               }
-
-              // ใช้ transform แทน top/left เพื่อประสิทธิภาพที่ดีขึ้น (ถ้าแก้ไหว) 
-              // แต่ใช้ top/left แบบเดิมก็โอเคเพราะจำนวนน้อย
               item.element.style.left = item.x + 'px';
               item.element.style.top = item.y + 'px';
             });
@@ -564,33 +539,52 @@
         const text = msgInput.value.trim();
         const name = nameInput.value.trim();
 
-        if (text === "") return;
+        // Validation ก่อนส่ง
+        if (text === "") {
+            alert("กรุณาพิมพ์ข้อความก่อนส่งครับ");
+            return;
+        }
+        if (text.length > MAX_CHARS) {
+            alert(`ข้อความยาวเกินไป (${text.length}/${MAX_CHARS})`);
+            return;
+        }
 
+        // Disable ปุ่มระหว่างโหลด
         btn.disabled = true;
-        btn.innerText = "ส่ง...";
+        btn.innerText = "กำลังส่ง...";
 
         fetch(WEB_APP_URL, {
           method: 'POST',
-          mode: 'no-cors',
+          mode: 'no-cors', // ใช้ no-cors สำหรับ Web App (Fire and forget)
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ text: text, name: name })
+          // ส่ง Token ไปด้วย
+          body: JSON.stringify({ 
+              text: text, 
+              name: name,
+              token: API_TOKEN 
+          })
         })
         .then(() => {
           msgInput.value = "";
+          // Reset counter
+          document.getElementById('charCounter').innerText = `0/${MAX_CHARS}`;
+          document.getElementById('charCounter').classList.remove('warning');
+          
           btn.disabled = false;
           btn.innerText = "ส่ง ❤️";
           msgInput.focus();
           createHeartEffect();
           
-          document.getElementById('emojiPicker').classList.remove('show'); // ปิด emoji ถ้าเปิดอยู่
+          document.getElementById('emojiPicker').classList.remove('show'); 
           setTimeout(fetchData, 1000);
         })
         .catch(err => {
           console.error(err);
           btn.disabled = false;
           btn.innerText = "ลองใหม่";
+          alert("เกิดข้อผิดพลาดในการส่ง");
         });
       }
 

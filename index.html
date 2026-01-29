@@ -336,8 +336,7 @@
       let floatingElements = [];
       let isMobile = false;
       let hasAlertedError = false;
-      let renderedMessageIds = new Set(); // ใช้ Set เก็บ messageId ที่แสดงแล้ว
-      let newMessagesCount = 0; // นับจำนวนข้อความใหม่สำหรับการ scroll
+      let renderedMessageIds = new Set(); // เก็บ ID ของข้อความที่แสดงแล้วเพื่อกันซ้ำ
 
       const emojis = [
         "❤️", "💖", "💘", "💝", "💓", "💗", "💞", "💕", "💟", "❣️", 
@@ -360,7 +359,6 @@
 
         fetchData(); 
         requestAnimationFrame(animateLoop);
-        // ทำการ fetch ทุก 3 วินาที
         setInterval(fetchData, 3000);
       };
 
@@ -370,7 +368,7 @@
           btn.style.transition = "transform 0.5s";
           setTimeout(() => { btn.style.transform = "rotate(0deg)"; }, 500);
           
-          // ล้าง Set ของ messageId ที่แสดงแล้ว
+          // ล้างข้อมูลเก่าและโหลดใหม่ทั้งหมด
           renderedMessageIds.clear();
           existingMessages = []; 
           document.getElementById('floating-container').innerHTML = ''; 
@@ -459,49 +457,38 @@
           })
           .catch(error => {
             console.error('Error:', error);
-            // แจ้งเตือนแค่ครั้งเดียว ไม่แจ้งซ้ำให้รำคาญ
             if (!hasAlertedError && error.name === "SyntaxError") {
-                // alert("⚠️ เชื่อมต่อไม่ได้! เช็ค URL หรือการตั้งค่า Anyone"); // ปิด alert กันกระตุก
                 hasAlertedError = true;
             }
           });
       }
 
       function updateBoard(messages) {
-        // รีเซ็ตตัวนับข้อความใหม่
-        newMessagesCount = 0;
+        if (!messages || messages.length === 0) return;
+
+        let newMessagesCount = 0;
+        let incoming = [...messages].reverse(); 
         
-        if (messages && messages.length > 0) {
-            let incoming = [...messages].reverse(); 
-            
-            incoming.forEach(msgData => {
-                // ตรวจสอบว่ามี messageId หรือไม่
-                if (!msgData.id) {
-                    console.warn('Message without ID detected:', msgData);
-                    return;
-                }
-                
-                // ตรวจสอบว่า messageId นี้เคยแสดงแล้วหรือไม่
-                if (!renderedMessageIds.has(msgData.id)) {
-                    createFloatingText(msgData);
-                    renderedMessageIds.add(msgData.id);
-                    newMessagesCount++;
-                }
-            });
-            
-            // อัปเดต Cache
-            existingMessages = messages;
-            
-            // เลื่อนจอเฉพาะเมื่อมีข้อความใหม่จริงๆ (แก้ปัญหากระตุกในมือถือ)
-            if (isMobile && newMessagesCount > 0) {
-                 const container = document.getElementById('floating-container');
-                 setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
+        incoming.forEach(msgData => {
+            // ตรวจสอบว่ามี ID และยังไม่เคยแสดงผล
+            if (msgData.id && !renderedMessageIds.has(msgData.id)) {
+                createFloatingText(msgData);
+                renderedMessageIds.add(msgData.id);
+                newMessagesCount++;
             }
+        });
+        
+        existingMessages = messages;
+        
+        // เลื่อนจอเฉพาะเมื่อมีข้อความใหม่จริงๆ
+        if (isMobile && newMessagesCount > 0) {
+             const container = document.getElementById('floating-container');
+             setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
         }
       }
 
       function createFloatingText(data) {
-        // จำกัดจำนวนข้อความที่แสดง
+        // จำกัดจำนวนข้อความที่แสดงผลบนหน้าจอ
         if (floatingElements.length >= MAX_MESSAGES) {
             const oldest = floatingElements.shift(); 
             if (oldest && oldest.element) oldest.element.remove();
@@ -534,7 +521,7 @@
 
         const newItem = {
           element: el,
-          id: data.id, // เก็บ messageId ไว้ด้วย
+          id: data.id,
           x: startX,
           y: startY,
           vx: Math.cos(angle) * speed,
@@ -547,7 +534,7 @@
       }
 
       function animateLoop() {
-        // ถ้าเป็นมือถือ ไม่ต้องรัน Animation Loop เลย (ประหยัดทรัพยากร)
+        // ปิดการทำงานบนมือถือเพื่อประหยัดพลังงาน
         if (isMobile) {
              requestAnimationFrame(animateLoop);
              return;
@@ -613,7 +600,7 @@
           body: JSON.stringify({ 
               text: text, 
               name: name,
-              token: API_TOKEN  // ส่ง API_TOKEN ทุกครั้ง
+              token: API_TOKEN 
           })
         })
         .then(() => {
@@ -627,7 +614,6 @@
           createHeartEffect();
           
           document.getElementById('emojiPicker').classList.remove('show'); 
-          // บังคับโหลดใหม่ทันทีหลังส่ง
           setTimeout(fetchData, 1000);
         })
         .catch(err => {

@@ -243,17 +243,17 @@
             background: rgba(255, 240, 245, 0.95); 
             font-size: 1.4rem; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-            z-index: 50; /* สูงกว่าข้อความ แต่ต่ำกว่า Input */
+            z-index: 50; 
         }
 
-        #refreshBtn { display: flex; } /* แสดงปุ่มรีเฟรชเฉพาะมือถือ */
+        #refreshBtn { display: flex; } 
 
         .decoration { display: none; }
 
         #floating-container {
           position: fixed; 
-          top: 60px; /* เริ่มใต้ Header */
-          bottom: 70px; /* เว้นที่ให้ Input */
+          top: 60px; 
+          bottom: 70px; 
           left: 0; 
           width: 100%; 
           height: auto;
@@ -301,7 +301,6 @@
 
     <div id="main-header">Happy Valentine's Day 💖</div>
     
-    <!-- ปุ่ม Refresh สำหรับมือถือ (กดแล้วโหลดข้อความใหม่ทันที) -->
     <button id="refreshBtn" onclick="forceReload()">↻</button>
 
     <div class="decoration dec-tl">💌</div>
@@ -326,8 +325,6 @@
     </div>
 
     <script>
-      // =========================================================
-      // ⚠️⚠️ ลิงก์ Web App URL ที่อัปเดตแล้ว ⚠️⚠️
       // =========================================================
       const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8MuI4cpeOFEnf7Mv5iYCTDpmq_E1jKa4yd4ftcryrXxs9BDV3Mn0_AoUkq28dC6sY/exec"; 
       const API_TOKEN = 'MY_LOVE_TOKEN_2025'; 
@@ -361,20 +358,20 @@
 
         fetchData(); 
         requestAnimationFrame(animateLoop);
-        setInterval(fetchData, 4000);
+        // เพิ่มความถี่เป็น 3 วิ เพื่อให้รู้สึกตอบสนองไวขึ้น แต่ไม่ถี่จนกระตุก
+        setInterval(fetchData, 3000);
       };
 
-      // ฟังก์ชันสำหรับปุ่ม Refresh บนมือถือ
       function forceReload() {
           const btn = document.getElementById('refreshBtn');
           btn.style.transform = "rotate(360deg)";
           btn.style.transition = "transform 0.5s";
           setTimeout(() => { btn.style.transform = "rotate(0deg)"; }, 500);
           
-          existingMessages = []; // เคลียร์ของเก่า
-          document.getElementById('floating-container').innerHTML = ''; // ล้างหน้าจอ
+          existingMessages = []; 
+          document.getElementById('floating-container').innerHTML = ''; 
           floatingElements = [];
-          fetchData(); // ดึงใหม่
+          fetchData(); 
       }
 
       function setupInputValidation() {
@@ -445,7 +442,6 @@
       function fetchData() {
         if (WEB_APP_URL.includes("URL_ที่ได้จาก")) return;
 
-        // 🔥 แก้ปัญหา Cache: เติม timestamp ต่อท้าย URL เสมอ
         const bustCache = "?t=" + new Date().getTime();
 
         fetch(WEB_APP_URL + bustCache)
@@ -459,33 +455,43 @@
           })
           .catch(error => {
             console.error('Error:', error);
+            // แจ้งเตือนแค่ครั้งเดียว ไม่แจ้งซ้ำให้รำคาญ
             if (!hasAlertedError && error.name === "SyntaxError") {
-                alert("⚠️ เชื่อมต่อไม่ได้! เช็ค URL หรือการตั้งค่า Anyone");
+                // alert("⚠️ เชื่อมต่อไม่ได้! เช็ค URL หรือการตั้งค่า Anyone"); // ปิด alert กันกระตุก
                 hasAlertedError = true;
             }
           });
       }
 
       function updateBoard(messages) {
+        // แก้ไข: ไม่เช็คเงื่อนไขซับซ้อน รันทุกครั้งที่มีข้อมูล
+        // เพื่อป้องกันบั๊กที่คิดว่าไม่มีข้อความใหม่ทั้งที่มี
         if (messages.length > 0) {
-           const latestMsg = messages[0];
-           const currentLatest = existingMessages[0];
-           
-           if (!currentLatest || (latestMsg.timestamp !== currentLatest.timestamp)) {
-                let incoming = [...messages].reverse(); 
+            let incoming = [...messages].reverse(); 
+            let addedCount = 0;
+            
+            incoming.forEach(msgData => {
+                // เช็คว่ามีข้อความนี้หรือยัง (กันซ้ำ)
+                const isExist = existingMessages.some(em => 
+                    em.timestamp === msgData.timestamp && 
+                    em.text === msgData.text &&
+                    em.name === msgData.name
+                );
                 
-                incoming.forEach(msgData => {
-                    const isExist = existingMessages.some(em => 
-                        em.timestamp === msgData.timestamp && em.text === msgData.text
-                    );
-                    
-                    if (!isExist) {
-                        createFloatingText(msgData);
-                    }
-                });
-                
-                existingMessages = messages;
-           }
+                if (!isExist) {
+                    createFloatingText(msgData);
+                    addedCount++;
+                }
+            });
+            
+            // อัปเดต Cache
+            existingMessages = messages;
+            
+            // เลื่อนจอเฉพาะเมื่อมีข้อความใหม่จริงๆ (แก้ปัญหากระตุกในมือถือ)
+            if (isMobile && addedCount > 0) {
+                 const container = document.getElementById('floating-container');
+                 setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
+            }
         }
       }
 
@@ -520,7 +526,7 @@
         let speed = 0.4 + Math.random() * 0.8;
         let angle = Math.random() * Math.PI * 2;
 
-        floatingElements.push({
+        const newItem = {
           element: el,
           x: startX,
           y: startY,
@@ -528,38 +534,43 @@
           vy: Math.sin(angle) * speed,
           width: 0,
           height: 0
-        });
+        };
 
-        if (isMobile) {
-            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
-        }
+        floatingElements.push(newItem);
+        
+        // ไม่สั่ง Scroll ที่นี่แล้ว ไปสั่งทีเดียวใน updateBoard เพื่อลดกระตุก
       }
 
       function animateLoop() {
-        if (!isMobile) {
-            const containerW = window.innerWidth;
-            const containerH = window.innerHeight;
-
-            floatingElements.forEach(item => {
-              if (item.width === 0) {
-                item.width = item.element.offsetWidth;
-                item.height = item.element.offsetHeight;
-              }
-              item.x += item.vx;
-              item.y += item.vy;
-
-              if (item.x <= 0 || item.x + item.width >= containerW) {
-                item.vx *= -1;
-                item.x = Math.max(0, Math.min(item.x, containerW - item.width));
-              }
-              if (item.y <= 0 || item.y + item.height >= containerH) {
-                item.vy *= -1;
-                item.y = Math.max(0, Math.min(item.y, containerH - item.height));
-              }
-              item.element.style.left = item.x + 'px';
-              item.element.style.top = item.y + 'px';
-            });
+        // แก้ไข: ถ้าเป็นมือถือ ไม่ต้องรัน Animation Loop เลย (ประหยัดเครื่อง หายกระตุก)
+        if (isMobile) {
+             requestAnimationFrame(animateLoop);
+             return;
         }
+
+        const containerW = window.innerWidth;
+        const containerH = window.innerHeight;
+
+        floatingElements.forEach(item => {
+          if (item.width === 0) {
+            item.width = item.element.offsetWidth;
+            item.height = item.element.offsetHeight;
+          }
+          item.x += item.vx;
+          item.y += item.vy;
+
+          if (item.x <= 0 || item.x + item.width >= containerW) {
+            item.vx *= -1;
+            item.x = Math.max(0, Math.min(item.x, containerW - item.width));
+          }
+          if (item.y <= 0 || item.y + item.height >= containerH) {
+            item.vy *= -1;
+            item.y = Math.max(0, Math.min(item.y, containerH - item.height));
+          }
+          item.element.style.left = item.x + 'px';
+          item.element.style.top = item.y + 'px';
+        });
+
         requestAnimationFrame(animateLoop);
       }
 
@@ -611,8 +622,8 @@
           createHeartEffect();
           
           document.getElementById('emojiPicker').classList.remove('show'); 
-          // บังคับโหลดใหม่ทันทีหลังส่ง
-          setTimeout(fetchData, 1500);
+          // บังคับโหลดใหม่ทันทีหลังส่ง (ลดเวลาลงเพื่อให้รู้สึกว่ามาไวขึ้น)
+          setTimeout(fetchData, 1000);
         })
         .catch(err => {
           console.error(err);
